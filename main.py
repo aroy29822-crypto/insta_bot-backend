@@ -24,18 +24,25 @@ def verify():
 @app.route('/', methods=['POST'])
 def webhook():
     data = request.get_json()
-    print("Incoming webhook data:", data)
+    print("📩 Incoming webhook data:", data)
 
     try:
         if data and 'entry' in data:
-            message = data['entry'][0]['messaging'][0]['message']['text']
-            sender_id = data['entry'][0]['messaging'][0]['sender']['id']
+            changes = data['entry'][0].get('changes', [])
+            for change in changes:
+                if change.get('field') == 'comments':
+                    comment_id = change['value']['id']
+                    text = change['value']['text']
 
-            reply_text = f"Hey there! You said: {message}"
-            requests.post(
-                f"https://graph.facebook.com/v19.0/me/messages?access_token={ACCESS_TOKEN}",
-                json={"recipient": {"id": sender_id}, "message": {"text": reply_text}}
-            )
+                    reply_text = f"Hey! You commented: {text}"
+                    reply_url = f"https://graph.facebook.com/v19.0/{comment_id}/replies"
+                    payload = {
+                        "message": reply_text,
+                        "access_token": ACCESS_TOKEN
+                    }
+                    r = requests.post(reply_url, data=payload)
+                    print("✅ Replied to comment!", r.text)
+
     except Exception as e:
         print("Error:", e)
 
