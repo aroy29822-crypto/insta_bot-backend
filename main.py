@@ -41,6 +41,34 @@ def webhook():
                     print(f"💬 New comment from {user}: {comment}")
 
     return "EVENT_RECEIVED", 200
+@app.route('/', methods=['POST'])
+def webhook():
+    data = request.get_json()
+    print("📩 Received event:", data)
+
+    try:
+        if data and 'entry' in data:
+            for entry in data['entry']:
+                messaging = entry.get('messaging', [])
+                for message_event in messaging:
+                    sender_id = message_event['sender']['id']
+                    if 'message' in message_event:
+                        text = message_event['message'].get('text', '')
+                        print(f"💬 New message: {text}")
+                        
+                        # reply message
+                        reply = f"Hey! You said: {text}"
+                        requests.post(
+                            f"https://graph.facebook.com/v19.0/me/messages?access_token={ACCESS_TOKEN}",
+                            json={
+                                "recipient": {"id": sender_id},
+                                "message": {"text": reply}
+                            }
+                        )
+    except Exception as e:
+        print("Error:", e)
+
+    return "EVENT_RECEIVED", 200
 
 
 if __name__ == '__main__':
