@@ -11,12 +11,14 @@ def verify():
     token = request.args.get('hub.verify_token')
     challenge = request.args.get('hub.challenge')
 
+    print(f"🔎 VERIFY REQUEST: mode={mode}, token={token}, challenge={challenge}")
+
     if mode == 'subscribe' and token == VERIFY_TOKEN:
         print("✅ Webhook verified successfully!")
         return challenge, 200
     else:
-        print("❌ Verification failed")
-        return 'Verification failed', 403
+        print("❌ Webhook verification failed!")
+        return "Verification failed", 403
 
 
 @app.route('/', methods=['POST'])
@@ -28,4 +30,4 @@ def webhook():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
