@@ -26,6 +26,21 @@ def webhook():
     data = request.get_json()
     print("📩 Received event:", data)
     return "EVENT_RECEIVED", 200
+@app.route('/', methods=['POST'])
+def webhook():
+    data = request.get_json()
+    print("📩 Received event:", data)
+
+    if data and 'entry' in data:
+        for entry in data['entry']:
+            changes = entry.get('changes', [])
+            for change in changes:
+                if change.get('field') == 'comments':
+                    comment = change['value'].get('text', '')
+                    user = change['value'].get('from', {}).get('username', '')
+                    print(f"💬 New comment from {user}: {comment}")
+
+    return "EVENT_RECEIVED", 200
 
 
 if __name__ == '__main__':
