@@ -1,50 +1,32 @@
 from flask import Flask, request
+import requests
 import os
 
 app = Flask(__name__)
 
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "instabot123")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 
 @app.route('/', methods=['GET'])
-def verify():
+def verify_webhook():
+    """Verify webhook endpoint with Meta callback"""
     mode = request.args.get('hub.mode')
     token = request.args.get('hub.verify_token')
     challenge = request.args.get('hub.challenge')
-
-    print(f"🔎 VERIFY REQUEST: mode={mode}, token={token}, challenge={challenge}")
 
     if mode == 'subscribe' and token == VERIFY_TOKEN:
         print("✅ Webhook verified successfully!")
         return challenge, 200
     else:
         print("❌ Webhook verification failed!")
-        return "Verification failed", 403
+        return 'Verification failed', 403
 
 
 @app.route('/', methods=['POST'])
-def webhook():
+def receive_webhook():
+    """Receive webhook events from Instagram"""
     data = request.get_json()
-    print("📩 Received event:", data)
-    return "EVENT_RECEIVED", 200
-@app.route('/', methods=['POST'])
-def webhook():
-    data = request.get_json()
-    print("📩 Received event:", data)
-
-    if data and 'entry' in data:
-        for entry in data['entry']:
-            changes = entry.get('changes', [])
-            for change in changes:
-                if change.get('field') == 'comments':
-                    comment = change['value'].get('text', '')
-                    user = change['value'].get('from', {}).get('username', '')
-                    print(f"💬 New comment from {user}: {comment}")
-
-    return "EVENT_RECEIVED", 200
-@app.route('/', methods=['POST'])
-def webhook():
-    data = request.get_json()
-    print("📩 Received event:", data)
+    print("📩 Received data:", data)
 
     try:
         if data and 'entry' in data:
@@ -55,7 +37,7 @@ def webhook():
                     if 'message' in message_event:
                         text = message_event['message'].get('text', '')
                         print(f"💬 New message: {text}")
-                        
+
                         # reply message
                         reply = f"Hey! You said: {text}"
                         requests.post(
@@ -72,5 +54,4 @@ def webhook():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=10000, debug=False)
